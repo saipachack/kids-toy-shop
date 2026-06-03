@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Outfit:wght@100..900&family=Noto+Sans+Thai:wght@100..900&family=Phetsarath:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', 'Noto Sans Thai', 'Phetsarath', sans-serif;
+  --font-display: 'Fredoka', 'Noto Sans Thai', 'Phetsarath', sans-serif;
+
+  --color-brand-pink-50: #fff5f6;
+  --color-brand-pink-100: #ffebeb;
+  --color-brand-pink-200: #ffd4d6;
+  --color-brand-pink-400: #ff9da2;
+  --color-brand-pink-500: #ff6b74;
+  --color-brand-pink-600: #eb4e58;
+
+  --color-brand-blue-50: #f0f7ff;
+  --color-brand-blue-100: #e0effe;
+  --color-brand-blue-200: #bae0fd;
+  --color-brand-blue-400: #60a9fa;
+  --color-brand-blue-500: #3b82f6;
+  --color-brand-blue-600: #1d4ed8;
+
+  --color-brand-yellow-100: #fffbeb;
+  --color-brand-yellow-300: #fde047;
+  --color-brand-yellow-500: #eab308;
+
+  --color-brand-mint-100: #ecfdf5;
+  --color-brand-mint-300: #6ee7b7;
+  --color-brand-mint-500: #10b981;
+
+  --color-brand-purple-100: #faf5ff;
+  --color-brand-purple-300: #d8b4fe;
+  --color-brand-purple-500: #a855f7;
+
+  --color-brand-orange-100: #fff7ed;
+  --color-brand-orange-300: #fdba74;
+  --color-brand-orange-500: #f97316;
+}
+
+/* Light / Dark Mode Tokens */
+:root {
+  --background: #fdfdfd;
+  --foreground: #1e293b;
+  --card-bg: #ffffff;
+  --border-color: #f1f5f9;
+  --muted-text: #64748b;
+  --accent-soft: #ffebeb;
+}
+
+html.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card-bg: #1e293b;
+  --border-color: #334155;
+  --muted-text: #94a3b8;
+  --accent-soft: #312e81;
+}
+
+html[lang="la"] {
+  --font-sans: 'Phetsarath', 'Outfit', sans-serif;
+  --font-display: 'Phetsarath', 'Fredoka', sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar for playful UI */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: #ffcbd0;
+  border-radius: 9999px;
+  border: 2px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff9da2;
+}
+
+/* Custom Glassmorphism styles */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+html.dark .glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Page transitions */
+.page-enter {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

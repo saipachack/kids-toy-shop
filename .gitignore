@@ -1,0 +1,32 @@
+# Local Node environment binaries and library
+node-env/
+
+# Dependency directories
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+backend/dist/
+.next/
+frontend/.next/
+out/
+frontend/out/
+
+# Local environment credentials (important to prevent leaking keys)
+.env
+.env.local
+*.env
+backend/.env
+frontend/.env
+
+# Local SQLite database files
+*.db
+*.db-journal
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Operating system files
+.DS_Store
+Thumbs.db
