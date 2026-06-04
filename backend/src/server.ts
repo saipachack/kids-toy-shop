@@ -12,8 +12,10 @@ import authRoutes from './routes/auth';
 import productRoutes from './routes/products';
 import orderRoutes from './routes/orders';
 import paymentRoutes from './routes/payments';
+import whatsappRoutes from './routes/whatsapp';
 import prisma from './prisma';
 import { authenticateToken, adminOnly } from './middlewares/auth';
+import { whatsapp } from './services/whatsapp';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -44,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // In-app Notifications endpoint (Customer & Admin)
 app.get('/api/notifications', authenticateToken, async (req: any, res) => {
@@ -184,6 +187,12 @@ app.get('/api/admin/metrics', authenticateToken, adminOnly, async (req, res) => 
 });
 
 // App Entry
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Pattie Play Shop Server is running on port ${PORT}`);
+  // Initialize WhatsApp service to auto-resume active sessions
+  try {
+    await whatsapp.init();
+  } catch (error) {
+    console.error('[WhatsApp] Auto-init failed:', error);
+  }
 });

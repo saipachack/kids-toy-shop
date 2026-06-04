@@ -5,18 +5,24 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
 
 export default function Cart() {
   const router = useRouter();
   const { cartItems, removeFromCart, updateQuantity, cartSubtotal, cartCount } = useCart();
   const { t, tObj } = useLanguage();
+  const { isAuthenticated } = useAuth();
 
   const shippingFee = cartSubtotal > 500000 || cartSubtotal === 0 ? 0 : 40000;
   const orderTotal = cartSubtotal + shippingFee;
 
   const handleCheckoutRedirect = () => {
-    router.push('/checkout');
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/checkout');
+    } else {
+      router.push('/checkout');
+    }
   };
 
   if (cartItems.length === 0) {

@@ -80,4 +80,10 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-export const API_STATIC_URL = 'http://localhost:5001'; // For prefixing static files like /uploads
+export const API_STATIC_URL = process.env.NEXT_PUBLIC_API_STATIC_URL || 'http://localhost:5001';
+
+export const getMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${API_STATIC_URL}${url}`;
+};

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../prisma';
 import { authenticateToken, AuthRequest } from '../middlewares/auth';
+import { whatsapp } from '../services/whatsapp';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_kids_shop_jwt_token_key_987654321';
@@ -226,6 +227,121 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json({ messageEn: error.message || 'Server error', messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+});
+
+// Send OTP via WhatsApp or fall back to mock
+router.post('/send-otp', async (req: Request, res: Response) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({
+      messageEn: 'Phone number is required',
+      messageTh: 'จำเป็นต้องระบุเบอร์โทรศัพท์',
+      messageLa: 'ຈຳເປັນຕ້ອງລະບຸເບີໂທລະສັບ'
+    });
+  }
+
+  try {
+    // Generate 6-digit random code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+
+    // Delete any existing code for this phone number to prevent duplicates
+    await prisma.phoneVerification.deleteMany({ where: { phone } });
+
+    // Save new verification to database
+    await prisma.phoneVerification.create({
+      data: {
+        phone,
+        code,
+        expiresAt
+      }
+    });
+
+    // Try sending via real WhatsApp
+    const sentReal = await whatsapp.sendOtp(phone, code);
+
+    if (sentReal) {
+      return res.json({
+        success: true,
+        messageEn: 'OTP code sent via WhatsApp',
+        messageTh: 'ส่งรหัส OTP ทาง WhatsApp แล้ว',
+        messageLa: 'ສົ່ງລະຫັດ OTP ທາງ WhatsApp ແລ້ວ'
+      });
+    } else {
+      // Fallback mock mode if WhatsApp is disconnected
+      return res.json({
+        success: true,
+        mock: true,
+        code,
+        messageEn: 'WhatsApp bot is offline. OTP code is displayed below.',
+        messageTh: 'บอท WhatsApp ออฟไลน์อยู่ แสดงรหัสผ่านหน้าจอดังนี้',
+        messageLa: 'ບັອດ WhatsApp ອອບໄລນ໌ຢູ່ ສະແດງລະຫັດເທິງໜ້າຈໍດັ່ງນີ້'
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      messageEn: error.message || 'Server error',
+      messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์',
+      messageLa: 'ເກີດຂໍ້ຜິດພາດຈາກເຊີເວີ'
+    });
+  }
+});
+
+// Verify OTP Code
+router.post('/verify-otp', async (req: Request, res: Response) => {
+  const { phone, code } = req.body;
+
+  if (!phone || !code) {
+    return res.status(400).json({
+      messageEn: 'Phone number and verification code are required',
+      messageTh: 'จำเป็นต้องระบุเบอร์โทรศัพท์และรหัสยืนยัน',
+      messageLa: 'ຈຳເປັນຕ້ອງລະບຸເບີໂທລະສັບ ແລະ ລະຫັດຢືນຢັນ'
+    });
+  }
+
+  try {
+    const verification = await prisma.phoneVerification.findUnique({
+      where: { phone }
+    });
+
+    const invalidError = {
+      success: false,
+      messageEn: 'Invalid or expired OTP verification code',
+      messageTh: 'รหัส OTP ไม่ถูกต้องหรือหมดอายุ',
+      messageLa: 'ລະຫັດ OTP ບໍ່ຖືກຕ້ອງ ຫຼື ໝົດອາຍຸ'
+    };
+
+    if (!verification) {
+      return res.status(400).json(invalidError);
+    }
+
+    if (verification.code !== code) {
+      return res.status(400).json(invalidError);
+    }
+
+    if (new Date() > verification.expiresAt) {
+      // Delete expired code
+      await prisma.phoneVerification.delete({ where: { phone } });
+      return res.status(400).json(invalidError);
+    }
+
+    // Success! Delete the verified record
+    await prisma.phoneVerification.delete({ where: { phone } });
+
+    res.json({
+      success: true,
+      messageEn: 'Phone number verified successfully',
+      messageTh: 'ยืนยันเบอร์โทรศัพท์สำเร็จ',
+      messageLa: 'ຢືນຢັນເບີໂທລະສັບສຳເລັດ'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      messageEn: error.message || 'Server error',
+      messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์',
+      messageLa: 'ເກີດຂໍ້ຜິດພາດຈາກເຊີເວີ'
+    });
   }
 });
 

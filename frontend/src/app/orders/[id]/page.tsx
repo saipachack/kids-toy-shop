@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, API_STATIC_URL } from '../../../utils/api';
+import { api, getMediaUrl } from '../../../utils/api';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useAuth } from '../../../context/AuthContext';
 import {
@@ -292,14 +292,14 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                   
                   <div className="relative max-w-sm rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                     <img
-                      src={`${API_STATIC_URL}${order.shippingSlipUrl}`}
+                      src={getMediaUrl(order.shippingSlipUrl)}
                       alt="Courier Shipping Slip"
                       className="w-full h-auto object-contain max-h-[300px]"
                     />
                   </div>
 
                   <a
-                    href={`${API_STATIC_URL}${order.shippingSlipUrl}`}
+                    href={getMediaUrl(order.shippingSlipUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 transition-all w-fit"
@@ -410,7 +410,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                   <div className="h-40 w-40 bg-white flex items-center justify-center border border-slate-200 p-1 rounded-xl overflow-hidden shadow-sm">
                     {qrDetails?.qrImageUrl ? (
                       <img 
-                        src={qrDetails.qrImageUrl.startsWith('http') ? qrDetails.qrImageUrl : `${API_STATIC_URL}${qrDetails.qrImageUrl}`} 
+                        src={getMediaUrl(qrDetails.qrImageUrl)} 
                         alt="BCEL One QR Code" 
                         className="h-full w-full object-contain" 
                       />
@@ -444,7 +444,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 {order.slipUrl ? (
                   <div className="flex flex-col gap-2 w-full text-left">
                     <span className="text-[9px] font-bold text-slate-400 uppercase">Uploaded slip receipt:</span>
-                    <a href={`${API_STATIC_URL}${order.slipUrl}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue-500 underline truncate">
+                    <a href={getMediaUrl(order.slipUrl)} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue-500 underline truncate">
                       {order.slipUrl}
                     </a>
                   </div>

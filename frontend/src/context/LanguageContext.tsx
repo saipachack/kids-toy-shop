@@ -96,6 +96,18 @@ const translations = {
     uploadSlip: 'Upload Payment Slip',
     slipSuccess: 'Slip uploaded successfully! Awaiting verification.',
 
+    // WhatsApp settings
+    whatsappTitle: 'WhatsApp Link Settings',
+    whatsappStatus: 'Connection Status',
+    whatsappConnected: 'Connected',
+    whatsappConnecting: 'Connecting...',
+    whatsappDisconnected: 'Disconnected',
+    whatsappQrInstruction: 'Scan this QR code with your phone using WhatsApp Linked Devices to connect.',
+    whatsappDisconnectButton: 'Disconnect Number',
+    whatsappConnectButton: 'Link WhatsApp Account',
+    whatsappGeneratingQr: 'Generating QR code...',
+    whatsappLinkedTo: 'Linked Number:',
+
     // Orders & Tracking
     orderHistory: 'My Order History',
     orderNumber: 'Order Number',
@@ -235,6 +247,18 @@ const translations = {
     uploadSlip: 'อัปโหลดสลิปหลักฐานการโอนเงิน',
     slipSuccess: 'อัปโหลดสลิปสำเร็จ! กำลังรอระบบตรวจสอบความถูกต้อง',
 
+    // WhatsApp settings
+    whatsappTitle: 'การตั้งค่าเชื่อมต่อ WhatsApp',
+    whatsappStatus: 'สถานะการเชื่อมต่อ',
+    whatsappConnected: 'เชื่อมต่อแล้ว',
+    whatsappConnecting: 'กำลังเชื่อมต่อ...',
+    whatsappDisconnected: 'ยังไม่ได้เชื่อมต่อ',
+    whatsappQrInstruction: 'สแกน QR Code นี้ด้วยโทรศัพท์มือถือของคุณในแอป WhatsApp (อุปกรณ์ที่เชื่อมต่อ) เพื่อเชื่อมต่อ',
+    whatsappDisconnectButton: 'ยกเลิกการเชื่อมต่อเบอร์',
+    whatsappConnectButton: 'เชื่อมต่อบัญชี WhatsApp',
+    whatsappGeneratingQr: 'กำลังสร้าง QR Code...',
+    whatsappLinkedTo: 'เบอร์ที่เชื่อมต่อ:',
+
     // Orders & Tracking
     orderHistory: 'ประวัติการสั่งซื้อของฉัน',
     orderNumber: 'หมายเลขคำสั่งซื้อ',
@@ -334,7 +358,7 @@ const translations = {
     categoriesHeader: 'ໝວດໝູ່ຂອງຫຼິ້ນ',
     sortBy: 'ຈັດລຽງຕາມ',
     sortNewest: 'ສິນຄ້າມາໃໝ່ຫຼ້າສຸດ',
-    sortPriceAsc: 'ລາຄາ: ຕ່ຳສຸດ - ສູงสุด',
+    sortPriceAsc: 'ລາຄາ: ຕ່ຳສຸດ - ສູງສຸດ',
     sortPriceDesc: 'ລາຄາ: ສູງສຸດ - ຕ່ຳສຸດ',
     bestSellers: 'ສິນຄ້າຂາຍດີ 🔥',
     newArrivals: 'ຂອງຫຼິ້ນມາໃໝ່ ✨',
@@ -350,7 +374,7 @@ const translations = {
 
     // Cart & Checkout
     cartTitle: 'ກະຕ່າສິນຄ້າຂອງທ່ານ',
-    cartEmpty: 'ບໍ່ມີສິນຄ້າໃນກະຕ່າ ເລີ່ມເລືອກຊື້ຂອງຫຼิ້ນກັນເລີຍ!',
+    cartEmpty: 'ບໍ່ມີສິນຄ້າໃນກະຕ່າ ເລີ່ມເລືອກຊື້ຂອງຫຼິ້ນກັນເລີຍ!',
     cartSummary: 'ສະຫຼຸບການສັ່ງຊື້',
     subtotal: 'ຍອດລວມສິນຄ້າ',
     shipping: 'ຄ່າຈັດສົ່ງ',
@@ -366,13 +390,25 @@ const translations = {
     // Payments
     payWithStripe: 'ຊຳລະຜ່ານບັດເຄຣດິດ/ເດບິດ (Stripe)',
     payWithPaypal: 'ຊຳລະຜ່ານລະບົບ PayPal',
-    payWithQR: 'ສະແກน QR Code / ໂອນເງິນຜ່ານທະນາຄານ',
-    qrInstructions: 'ສະແກນ QR code ຫຼື ໂอนເງິນໄປຍັງບັນຊີດ້ານລຸ່ມ ຈາກນັ້ນອັບໂຫຼດຮູບສະລິບໃບບິນເພື່ອຢືນຢັນ',
+    payWithQR: 'ສະແກນ QR Code / ໂອນເງິນຜ່ານທະນາຄານ',
+    qrInstructions: 'ສະແກນ QR code ຫຼື ໂອນເງິນໄປຍັງບັນຊີດ້ານລຸ່ມ ຈາກນັ້ນອັບໂຫຼດຮູບສະລິບໃບບິນເພື່ອຢືນຢັນ',
     accountName: 'ຊື່ບັນຊີ',
     accountNumber: 'ເລກບັນຊີ',
     bank: 'ທະນາຄານ',
     uploadSlip: 'ອັບໂຫຼດສະລິບຫຼັກຖານການໂອນ',
     slipSuccess: 'ອັບໂຫຼດສະລິບສຳເລັດ! ກະລຸນາລໍຖ້າການກວດສອບ',
+
+    // WhatsApp settings
+    whatsappTitle: 'ຕັ້ງຄ່າການເຊື່ອມຕໍ່ WhatsApp',
+    whatsappStatus: 'ສະຖານະການເຊື່ອມຕໍ່',
+    whatsappConnected: 'ເຊື່ອມຕໍ່ແລ້ວ',
+    whatsappConnecting: 'ກຳລັງເຊື່ອມຕໍ່...',
+    whatsappDisconnected: 'ຍັງບໍ່ທັນເຊື່ອມຕໍ່',
+    whatsappQrInstruction: 'ສະແກນ QR Code ນີ້ດ້ວຍໂທລະສັບຂອງທ່ານໃນແອັບ WhatsApp (ອຸປະກອນທີ່ເຊື່ອມຕໍ່) ເພື່ອເຊື່ອມຕໍ່',
+    whatsappDisconnectButton: 'ຍົກເລີກການເຊື່ອມຕໍ່ເບີ',
+    whatsappConnectButton: 'ເຊື່ອມຕໍ່ບັນຊີ WhatsApp',
+    whatsappGeneratingQr: 'ກຳລັງສ້າງ QR Code...',
+    whatsappLinkedTo: 'ເບີທີ່ເຊື່ອມຕໍ່:',
 
     // Orders & Tracking
     orderHistory: 'ປະຫວັດການສັ່ງຊື້ຂອງຂ້ອຍ',

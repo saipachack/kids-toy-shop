@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { api } from '../../utils/api';
 import { AlertCircle, Lock, Mail, User, Phone, MapPin } from 'lucide-react';
 
-export default function Register() {
+function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, isAuthenticated } = useAuth();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +24,6 @@ export default function Register() {
 
   // OTP Verification States
   const [otpSent, setOtpSent] = useState(false);
-  const [serverOtp, setServerOtp] = useState('');
   const [userOtp, setUserOtp] = useState('');
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
@@ -36,46 +37,101 @@ export default function Register() {
     }
   }, [resendCountdown]);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (phoneRaw.length !== 8) {
       setError('Phone number must be exactly 8 digits');
       return;
     }
-    
-    // Simulate sending OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setServerOtp(code);
-    setOtpSent(true);
-    setResendCountdown(60);
-    setOtpMessage({
-      text: `For testing, your OTP verification code is: ${code}`,
-      type: 'success'
-    });
-    
-    console.log(`\n================ OTP VERIFICATION SIMULATOR ================`);
-    console.log(`[SMS SENT TO +856 20 ${phoneRaw}] OTP Code`);
-    console.log(`Verification Code: ${code}`);
-    console.log(`==========================================================\n`);
-  };
+    setError(null);
+    setOtpMessage(null);
 
-  const handleVerifyOtp = () => {
-    if (userOtp === serverOtp) {
-      setIsPhoneVerified(true);
-      setOtpMessage(null);
-    } else {
-      setOtpMessage({
-        text: 'Invalid OTP code. Please try again.',
-        type: 'error'
-      });
+    try {
+      const finalPhone = `+85620${phoneRaw}`;
+      const response = await api.post('/auth/send-otp', { phone: finalPhone });
+      setOtpSent(true);
+      setResendCountdown(60);
+
+      if (response.mock && response.code) {
+        let successMsg = '';
+        if (language === 'LA') {
+          successMsg = `${response.messageLa || response.messageEn} (ລະຫັດຢືນຢັນຂອງທ່ານແມ່ນ: ${response.code})`;
+        } else if (language === 'TH') {
+          successMsg = `${response.messageTh || response.messageEn} (รหัสยืนยันของคุณคือ: ${response.code})`;
+        } else {
+          successMsg = `${response.messageEn} (Your code is: ${response.code})`;
+        }
+        setOtpMessage({
+          text: successMsg,
+          type: 'success'
+        });
+      } else {
+        let successMsg = '';
+        if (language === 'LA') {
+          successMsg = response.messageLa || response.messageEn;
+        } else if (language === 'TH') {
+          successMsg = response.messageTh || response.messageEn;
+        } else {
+          successMsg = response.messageEn;
+        }
+        setOtpMessage({
+          text: successMsg,
+          type: 'success'
+        });
+      }
+    } catch (err: any) {
+      try {
+        const parsedErr = JSON.parse(err.message);
+        const errMsg = language === 'LA'
+          ? (parsedErr.messageLa || parsedErr.messageEn)
+          : language === 'TH'
+            ? (parsedErr.messageTh || parsedErr.messageEn)
+            : parsedErr.messageEn;
+        setError(errMsg);
+      } catch (e) {
+        setError(err.message || 'Failed to send OTP code');
+      }
     }
   };
+
+  const handleVerifyOtp = async () => {
+    if (!userOtp) return;
+    setError(null);
+    setOtpMessage(null);
+
+    try {
+      const finalPhone = `+85620${phoneRaw}`;
+      await api.post('/auth/verify-otp', { phone: finalPhone, code: userOtp });
+      setIsPhoneVerified(true);
+      setOtpMessage(null);
+    } catch (err: any) {
+      try {
+        const parsedErr = JSON.parse(err.message);
+        const errMsg = language === 'LA'
+          ? (parsedErr.messageLa || parsedErr.messageEn)
+          : language === 'TH'
+            ? (parsedErr.messageTh || parsedErr.messageEn)
+            : parsedErr.messageEn;
+        setOtpMessage({
+          text: errMsg,
+          type: 'error'
+        });
+      } catch (e) {
+        setOtpMessage({
+          text: err.message || 'Invalid OTP code. Please try again.',
+          type: 'error'
+        });
+      }
+    }
+  };
+
+  const redirectTo = searchParams.get('redirect') || '/';
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/');
+      router.push(redirectTo);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +150,7 @@ export default function Register() {
     try {
       const finalPhone = `+85620${phoneRaw}`;
       await register({ email, password, name, phone: finalPhone, address });
-      router.push('/');
+      router.push(redirectTo);
     } catch (err: any) {
       try {
         const parsedErr = JSON.parse(err.message);
@@ -330,12 +386,23 @@ export default function Register() {
         {/* Signin redirection link */}
         <div className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
           <span>{t('alreadyHaveAccount')} </span>
-          <Link href="/login" className="text-brand-pink-500 hover:text-brand-pink-600 font-bold">
+          <Link
+            href={redirectTo !== '/' ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login"}
+            className="text-brand-pink-500 hover:text-brand-pink-600 font-bold"
+          >
             {t('navLogin')}
           </Link>
         </div>
 
       </div>
     </div>
+  );
+}
+
+export default function Register() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-sm font-semibold">Loading...</div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }

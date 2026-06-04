@@ -95,3 +95,17 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model WhatsappSession {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}
+
+model PhoneVerification {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

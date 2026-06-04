@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { useLanguage } from '../../../context/LanguageContext';
-import { api, API_STATIC_URL } from '../../../utils/api';
+import { api, getMediaUrl } from '../../../utils/api';
 import AdminSidebar from '../../../components/AdminSidebar';
 import { ShoppingBag, Search, Eye, Edit2, X, Check, Truck, CreditCard, User, AlertCircle } from 'lucide-react';
 
@@ -296,13 +296,13 @@ export default function AdminOrders() {
                   {selectedOrder.slipUrl ? (
                     <div className="flex flex-col gap-3">
                       <a
-                        href={`${API_STATIC_URL}${selectedOrder.slipUrl}`}
+                        href={getMediaUrl(selectedOrder.slipUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="relative block aspect-[3/4] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 group hover:scale-[1.01] transition-transform"
                       >
                         <img
-                          src={`${API_STATIC_URL}${selectedOrder.slipUrl}`}
+                          src={getMediaUrl(selectedOrder.slipUrl)}
                           alt="Bank Slip Receipt Upload"
                           className="h-full w-full object-cover"
                         />
@@ -384,7 +384,7 @@ export default function AdminOrders() {
                         {selectedOrder.shippingSlipUrl && !selectedShippingFile && (
                           <div className="mb-2 mt-1">
                             <span className="text-[9px] text-slate-400 block mb-0.5">Current shipping slip:</span>
-                            <a href={`${API_STATIC_URL}${selectedOrder.shippingSlipUrl}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-blue-500 hover:underline truncate block">
+                            <a href={getMediaUrl(selectedOrder.shippingSlipUrl)} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-blue-500 hover:underline truncate block">
                               {selectedOrder.shippingSlipUrl}
                             </a>
                           </div>

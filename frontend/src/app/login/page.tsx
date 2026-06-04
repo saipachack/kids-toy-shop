@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { AlertCircle, Lock, Mail } from 'lucide-react';
 
-export default function Login() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, googleLogin, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
@@ -17,12 +18,14 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const redirectTo = searchParams.get('redirect') || '/';
+
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/');
+      router.push(redirectTo);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +39,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      router.push('/');
+      router.push(redirectTo);
     } catch (err: any) {
       try {
         const parsedErr = JSON.parse(err.message);
@@ -55,7 +58,7 @@ export default function Login() {
     try {
       // Simulate Google Login callback returning user info
       await googleLogin('google.user@gmail.com', 'Google Playful User');
-      router.push('/');
+      router.push(redirectTo);
     } catch (err: any) {
       setError('Google Sign-In failed.');
     } finally {
@@ -184,12 +187,23 @@ export default function Login() {
         {/* Signup redirection link */}
         <div className="text-center text-xs text-slate-500 dark:text-slate-400">
           <span>{t('dontHaveAccount')} </span>
-          <Link href="/register" className="text-brand-pink-500 hover:text-brand-pink-600 font-bold">
+          <Link
+            href={redirectTo !== '/' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : "/register"}
+            className="text-brand-pink-500 hover:text-brand-pink-600 font-bold"
+          >
             {t('navRegister')}
           </Link>
         </div>
 
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-sm font-semibold">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
