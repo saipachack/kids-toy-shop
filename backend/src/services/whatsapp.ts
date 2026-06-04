@@ -5,7 +5,7 @@ import prisma from '../prisma';
 let baileysModule: any = null;
 async function loadBaileys() {
   if (!baileysModule) {
-    baileysModule = await import('@whiskeysockets/baileys');
+    baileysModule = await (new Function("return import('@whiskeysockets/baileys')")());
   }
   return baileysModule;
 }
