@@ -21,12 +21,13 @@ router.get('/status', authenticateToken, adminOnly, async (req, res: Response) =
 // Trigger connection initialization / QR regeneration
 router.post('/connect', authenticateToken, adminOnly, async (req, res: Response) => {
   try {
+    const { phone } = req.body;
     // This starts connection asynchronously in background, updates status
-    whatsapp.connect();
+    whatsapp.connect(phone);
     res.json({
       messageEn: 'Connection initialization triggered',
       messageTh: 'เริ่มกระบวนการเชื่อมต่อแล้ว',
-      messageLa: 'ເລີ່ມຕົ້ນຂັ້ນຕອນການເຊື່ອມຕໍ່ແລ້ວ'
+      messageLa: 'ເລີ່ມຕົ້ນขັ້ນຕອນການເຊື່ອມຕໍ່ແລ້ວ'
     });
   } catch (error: any) {
     res.status(500).json({

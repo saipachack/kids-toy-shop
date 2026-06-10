@@ -93,6 +93,8 @@ class WhatsappService {
   private sock: any = null;
   private status: ConnectionStatus = 'DISCONNECTED';
   private qr: string | null = null;
+  private pairingCode: string | null = null;
+  private pendingPhone: string | null = null;
   private connectedNumber: string | null = null;
   private connectedName: string | null = null;
   private sessionId = 'admin-store-session';
@@ -103,6 +105,7 @@ class WhatsappService {
     return {
       status: this.status,
       qr: this.qr,
+      pairingCode: this.pairingCode,
       connectedNumber: this.connectedNumber,
       connectedName: this.connectedName
     };
@@ -122,14 +125,26 @@ class WhatsappService {
     }
   }
 
-  async connect() {
-    if (this.status === 'CONNECTED' || this.status === 'CONNECTING') {
-      console.log('[WhatsApp] Already connected or connecting. Skipping connection request.');
+  async connect(phone?: string) {
+    if (this.status === 'CONNECTED') {
+      console.log('[WhatsApp] Already connected. Skipping connection request.');
       return;
+    }
+
+    // Clean restart of connecting state to prevent concurrent socket instances
+    if (this.sock) {
+      console.log('[WhatsApp] Re-initializing WhatsApp socket connection...');
+      try {
+        this.sock.ev.removeAllListeners('connection.update');
+        this.sock.ev.removeAllListeners('creds.update');
+      } catch (e) {}
+      this.sock = null;
     }
 
     this.status = 'CONNECTING';
     this.qr = null;
+    this.pairingCode = null;
+    this.pendingPhone = phone || null;
 
     try {
       const baileys = await loadBaileys();
@@ -150,11 +165,29 @@ class WhatsappService {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-          try {
-            this.qr = await QRCode.toDataURL(qr);
-            this.status = 'DISCONNECTED'; // Still disconnected until scanned
-          } catch (err) {
-            console.error('[WhatsApp] Error generating QR Data URL:', err);
+          if (this.pendingPhone) {
+            if (!this.pairingCode) {
+              try {
+                const formattedPhone = this.formatPhoneNumber(this.pendingPhone);
+                console.log(`[WhatsApp] Requesting pairing code for ${formattedPhone}...`);
+                const code = await this.sock.requestPairingCode(formattedPhone);
+                this.pairingCode = code;
+                this.qr = null;
+                console.log(`[WhatsApp] Pairing code generated: ${code}`);
+              } catch (err) {
+                console.error('[WhatsApp] Failed to request pairing code:', err);
+                try {
+                  this.qr = await QRCode.toDataURL(qr);
+                } catch (e) {}
+              }
+            }
+          } else {
+            try {
+              this.qr = await QRCode.toDataURL(qr);
+              this.status = 'DISCONNECTED'; // Still disconnected until scanned
+            } catch (err) {
+              console.error('[WhatsApp] Error generating QR Data URL:', err);
+            }
           }
         }
 
@@ -252,6 +285,23 @@ class WhatsappService {
     }
     
     return `${clean}@s.whatsapp.net`;
+  }
+
+  private formatPhoneNumber(phone: string): string {
+    // Remove leading '+', spaces, and hyphens
+    let clean = phone.replace(/[+\s-]/g, '');
+    
+    // Convert 020... to 85620... for Laotian numbers
+    if (clean.startsWith('020')) {
+      clean = '85620' + clean.slice(3);
+    } else if (clean.startsWith('0') && clean.length === 10) {
+      // Thai mobile number (starts with 0, total 10 digits)
+      clean = '66' + clean.slice(1);
+    } else if (clean.startsWith('20') && clean.length === 10) {
+      clean = '856' + clean;
+    }
+    
+    return clean;
   }
 
   async sendOtp(phone: string, code: string): Promise<boolean> {
