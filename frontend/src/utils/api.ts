@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kids-toy-shop.onrender.com/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.pattieplayshop.cloud-ip.cc/api';
 
 class ApiClient {
   private getHeaders(isMultipart = false): HeadersInit {
@@ -80,7 +80,7 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-export const API_STATIC_URL = process.env.NEXT_PUBLIC_API_STATIC_URL || 'https://kids-toy-shop.onrender.com';
+export const API_STATIC_URL = process.env.NEXT_PUBLIC_API_STATIC_URL || 'https://api.pattieplayshop.cloud-ip.cc';
 
 export const getMediaUrl = (url: string | null | undefined): string => {
   if (!url) return '';
