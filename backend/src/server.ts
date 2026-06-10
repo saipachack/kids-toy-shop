@@ -18,6 +18,7 @@ import { authenticateToken, adminOnly } from './middlewares/auth';
 import { whatsapp } from './services/whatsapp';
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5001;
 
 // Middlewares
