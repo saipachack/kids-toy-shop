@@ -1,4 +1,9 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.pattieplayshop.cloud-ip.cc/api';
+let rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.pattieplayshop.cloud-ip.cc/api';
+if (rawBaseUrl.includes('kids-toy-shop.onrender.com')) {
+  rawBaseUrl = rawBaseUrl.replace('kids-toy-shop.onrender.com', 'api.pattieplayshop.cloud-ip.cc');
+}
+const BASE_URL = rawBaseUrl;
+
 
 class ApiClient {
   private getHeaders(isMultipart = false): HeadersInit {
@@ -80,7 +85,12 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-export const API_STATIC_URL = process.env.NEXT_PUBLIC_API_STATIC_URL || 'https://api.pattieplayshop.cloud-ip.cc';
+
+let rawStaticUrl = process.env.NEXT_PUBLIC_API_STATIC_URL || 'https://api.pattieplayshop.cloud-ip.cc';
+if (rawStaticUrl.includes('kids-toy-shop.onrender.com')) {
+  rawStaticUrl = rawStaticUrl.replace('kids-toy-shop.onrender.com', 'api.pattieplayshop.cloud-ip.cc');
+}
+export const API_STATIC_URL = rawStaticUrl;
 
 export const getMediaUrl = (url: string | null | undefined): string => {
   if (!url) return '';
