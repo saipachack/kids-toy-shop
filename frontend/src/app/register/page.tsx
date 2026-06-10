@@ -28,6 +28,7 @@ function RegisterContent() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpMessage, setOtpMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   // Resend OTP Countdown timer
   useEffect(() => {
@@ -44,6 +45,7 @@ function RegisterContent() {
     }
     setError(null);
     setOtpMessage(null);
+    setIsSendingOtp(true);
 
     try {
       const response = await api.post('/auth/send-otp', { email });
@@ -89,6 +91,8 @@ function RegisterContent() {
       } catch (e) {
         setError(err.message || 'Failed to send OTP code');
       }
+    } finally {
+      setIsSendingOtp(false);
     }
   };
 
@@ -238,11 +242,11 @@ function RegisterContent() {
                 />
                 <button
                   type="button"
-                  disabled={!email || resendCountdown > 0 || isEmailVerified}
+                  disabled={!email || resendCountdown > 0 || isEmailVerified || isSendingOtp}
                   onClick={handleSendOtp}
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl bg-brand-pink-500 hover:bg-brand-pink-600 disabled:bg-slate-200 dark:disabled:bg-slate-700 text-white disabled:text-slate-400 dark:disabled:text-slate-500 px-3 py-1.5 text-[10px] font-bold transition-all active:scale-95 cursor-pointer"
                 >
-                  {isEmailVerified ? '✓' : resendCountdown > 0 ? `${resendCountdown}s` : t('sendOtp')}
+                  {isEmailVerified ? '✓' : isSendingOtp ? (language === 'LA' ? 'ກຳລັງສົ່ງ...' : language === 'TH' ? 'กำลังส่ง...' : 'Sending...') : resendCountdown > 0 ? `${resendCountdown}s` : t('sendOtp')}
                 </button>
               </div>
             </div>
