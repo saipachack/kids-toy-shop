@@ -1,6 +1,8 @@
 import pino from 'pino';
 import QRCode from 'qrcode';
 import prisma from '../prisma';
+import fs from 'fs';
+import path from 'path';
 
 let baileysModule: any = null;
 async function loadBaileys() {
@@ -319,6 +321,78 @@ class WhatsappService {
       return true;
     } catch (err) {
       console.error(`[WhatsApp] Error sending OTP to ${phone}:`, err);
+      return false;
+    }
+  }
+
+  async sendOrderConfirmation(phone: string, orderNumber: string, totalAmount: number): Promise<boolean> {
+    if (this.status !== 'CONNECTED' || !this.sock) {
+      console.log(`[WhatsApp] Simulated Order Confirmation for ${phone} - Order: ${orderNumber} - Amount: ${totalAmount} LAK (Bot Disconnected)`);
+      return false;
+    }
+
+    try {
+      const jid = this.formatJid(phone);
+      
+      // Load QR details dynamically
+      let settings = {
+        qrImageUrl: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=BCELONE_QR_PATTIE_PLAY_SHOP",
+        bankName: "Banque Pour Le Commerce Exterieur Lao (BCEL)",
+        accountName: "PATTIE PLAY SHOP CO., LTD.",
+        accountNumber: "160-12-00-0123456-001"
+      };
+
+      try {
+        const settingsPath = path.join(process.cwd(), 'data/qr-settings.json');
+        if (fs.existsSync(settingsPath)) {
+          settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+        }
+      } catch (e) {
+        console.error('Failed to read QR settings for WhatsApp notification:', e);
+      }
+
+      const text = `🛍️ *[Kids Shop]* ຂໍຂອບໃຈສຳລັບການສັ່ງຊື້ຂອງທ່ານ!\n\n` +
+        `📦 ລະຫັດຄຳສັ່ງຊື້: *${orderNumber}*\n` +
+        `💰 ຍອດລວມທັງໝົດ: *${totalAmount.toLocaleString()} ₭*\n\n` +
+        `🏦 *ຊ່ອງທາງການຊຳລະເງິນ (ໂອນຜ່ານທະນາຄານ):*\n` +
+        `• ທະນາຄาน: *${settings.bankName}*\n` +
+        `• ຊື່ບັນຊີ: *${settings.accountName}*\n` +
+        `• ເລກບັນຊີ: *${settings.accountNumber}*\n\n` +
+        `📸 ທ່ານສາມາດສະແກນ QR Code ທີ່ແນບມານີ້ເພື່ອໂອນເງິນ, ຫຼັງຈາກໂอนສຳເລັດແລ້ວ ກະລຸນາສົ່ງຮູບໃບບິນແຈ້ງໂອນເງິນ (Payment Slip) ກັບຄືນມາທາງນີ້ ຫຼື ອັບໂຫຼດຜ່ານໜ້າເວັບໄຊ.\n\n` +
+        `Thank you for your order!`;
+
+      // Check if qrImageUrl is a remote URL or a local path
+      let imageOption: any = null;
+      if (settings.qrImageUrl) {
+        if (settings.qrImageUrl.startsWith('http://') || settings.qrImageUrl.startsWith('https://')) {
+          imageOption = { url: settings.qrImageUrl };
+        } else {
+          const absolutePath = path.join(process.cwd(), settings.qrImageUrl);
+          if (fs.existsSync(absolutePath)) {
+            try {
+              imageOption = fs.readFileSync(absolutePath);
+            } catch (err) {
+              console.error('[WhatsApp] Error reading local QR code image file:', err);
+            }
+          }
+        }
+      }
+
+      if (imageOption) {
+        // Send as image with caption
+        await this.sock.sendMessage(jid, {
+          image: imageOption,
+          caption: text
+        });
+      } else {
+        // Fallback to text message if no image
+        await this.sock.sendMessage(jid, { text });
+      }
+
+      console.log(`[WhatsApp] Sent order confirmation and QR code successfully to: ${jid}`);
+      return true;
+    } catch (err) {
+      console.error(`[WhatsApp] Error sending order confirmation to ${phone}:`, err);
       return false;
     }
   }

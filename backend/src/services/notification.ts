@@ -104,6 +104,27 @@ export class NotificationService {
       console.error('Failed to save notification in DB:', err);
     }
 
+    // Trigger WhatsApp notification for order confirmation & QR payment bank details
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { phone: true }
+      });
+      const order = await prisma.order.findUnique({
+        where: { orderNumber },
+        select: { totalAmount: true }
+      });
+
+      if (user && user.phone && order) {
+        const { whatsapp } = require('./whatsapp');
+        if (status === 'PENDING_PAYMENT') {
+          whatsapp.sendOrderConfirmation(user.phone, orderNumber, order.totalAmount);
+        }
+      }
+    } catch (e) {
+      console.error('[WhatsApp Notification] Failed to send order confirmation:', e);
+    }
+
     // Simulate Email and LINE Notifications
     console.log(`\n================= NOTIFICATION SIMULATOR =================`);
     console.log(`[EMAIL SENT TO USER] Order #${orderNumber} status changed to ${status}`);
