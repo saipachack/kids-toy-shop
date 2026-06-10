@@ -27,7 +27,8 @@ export async function sendOtpEmail(email: string, code: string): Promise<boolean
         user: SMTP_USER,
         pass: SMTP_PASS,
       },
-    });
+      family: 4, // Force IPv4 to prevent ENETUNREACH on platforms like Render
+    } as any);
 
     const mailOptions = {
       from: SMTP_FROM,
