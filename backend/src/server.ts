@@ -186,6 +186,55 @@ app.get('/api/admin/metrics', authenticateToken, adminOnly, async (req, res) => 
   }
 });
 
+// Admin Customers & Reports Endpoint
+app.get('/api/admin/customers', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const customers = await prisma.user.findMany({
+      where: { role: 'CUSTOMER' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        address: true,
+        createdAt: true,
+        orders: {
+          select: {
+            id: true,
+            totalAmount: true,
+            status: true,
+            paymentStatus: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const report = customers.map(c => {
+      const paidOrders = c.orders.filter(o => o.status === 'PAID' || o.paymentStatus === 'PAID');
+      const totalOrdersCount = c.orders.length;
+      const totalPaidOrdersCount = paidOrders.length;
+      const totalAmountSpent = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+      return {
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        address: c.address,
+        createdAt: c.createdAt,
+        totalOrdersCount,
+        totalPaidOrdersCount,
+        totalAmountSpent
+      };
+    });
+
+    res.json(report);
+  } catch (error: any) {
+    res.status(500).json({ messageEn: error.message || 'Server error', messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+});
+
 // App Entry
 app.listen(PORT, async () => {
   console.log(`Pattie Play Shop Server is running on port ${PORT}`);

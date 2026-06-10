@@ -357,4 +357,73 @@ router.put('/:id/status', authenticateToken, adminOnly, async (req: Request, res
   }
 });
 
+// POST Cancel order (Customer)
+router.post('/:id/cancel', authenticateToken, async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) return res.status(401).json({ messageEn: 'Unauthorized', messageTh: 'ไม่ได้รับอนุญาต' });
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { orderItems: true }
+    });
+
+    if (!order) {
+      return res.status(404).json({ messageEn: 'Order not found', messageTh: 'ไม่พบคำสั่งซื้อ' });
+    }
+
+    if (order.userId !== authReq.user.id) {
+      return res.status(403).json({ messageEn: 'Access denied', messageTh: 'ปฏิเสธการเข้าถึง' });
+    }
+
+    // Only PENDING_PAYMENT or AWAITING_VERIFICATION orders can be cancelled
+    if (order.status !== 'PENDING_PAYMENT' && order.status !== 'AWAITING_VERIFICATION') {
+      return res.status(400).json({
+        messageEn: 'Only pending payment or verifying orders can be cancelled',
+        messageTh: 'สามารถยกเลิกได้เฉพาะคำสั่งซื้อที่ยังไม่ได้ชำระเงินหรือกำลังตรวจสอบเท่านั้น',
+        messageLa: 'ສາມາດຍົກເລີກໄດ້ສະເພາະຄຳສັ່ງຊື້ທີ່ຍັງບໍ່ທັນຊຳລະເງິນ ຫຼື ກຳລັງກວດສອບເທົ່ານັ້ນ'
+      });
+    }
+
+    // Perform transaction to change status and restore product stock
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // 1. Restore stock
+      for (const item of order.orderItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { increment: item.quantity }
+          }
+        });
+      }
+
+      // 2. Update status
+      return await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'CANCELLED',
+          paymentStatus: 'FAILED'
+        }
+      });
+    });
+
+    // Notify customer about cancellation
+    await NotificationService.sendStatusChange(
+      prisma,
+      updatedOrder.userId,
+      updatedOrder.orderNumber,
+      'CANCELLED'
+    );
+
+    res.json({
+      messageEn: 'Order cancelled successfully',
+      messageTh: 'ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว',
+      messageLa: 'ຍົກເລີກຄຳສັ່ງຊື້ຮຽບຮ້ອຍແລ້ວ',
+      order: updatedOrder
+    });
+  } catch (error: any) {
+    res.status(500).json({ messageEn: error.message || 'Server error', messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+});
+
 export default router;

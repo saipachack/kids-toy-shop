@@ -66,6 +66,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const [qrDetails, setQrDetails] = useState<any | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchOrder = async () => {
     try {
@@ -90,6 +91,28 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    const confirmMsg = language === 'TH'
+      ? 'คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำสั่งซื้อนี้?'
+      : language === 'LA'
+      ? 'ທ່ານແນ່ໃຈຫຼືບໍ່ວ່າຕ້ອງການຍົກເລີກຄຳສັ່ງຊື້ນີ້?'
+      : 'Are you sure you want to cancel this order?';
+
+    if (!confirm(confirmMsg)) return;
+
+    setCancelling(true);
+    try {
+      await api.post(`/orders/${order.id}/cancel`, {});
+      await fetchOrder();
+    } catch (err: any) {
+      console.error('Failed to cancel order:', err);
+      alert(err.message || 'Failed to cancel order');
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,6 +336,148 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
+      {/* QR Payment Box (Visible when order needs payment and method is QR) */}
+      {order.paymentMethod === 'QR_CODE' && order.paymentStatus !== 'PAID' && order.status !== 'CANCELLED' && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-800/80 border border-[var(--border-color)] shadow-sm print:hidden flex flex-col md:flex-row gap-8 items-center animate-fadeIn">
+          {/* Left Side: Large QR Code */}
+          <div className="flex flex-col items-center gap-3 shrink-0">
+            <div className="w-80 h-80 sm:w-96 sm:h-96 bg-white flex items-center justify-center border-2 border-slate-100 p-2 rounded-2xl overflow-hidden shadow-md">
+              {qrDetails?.qrImageUrl ? (
+                <img 
+                  src={getMediaUrl(qrDetails.qrImageUrl)} 
+                  alt="BCEL One QR Code" 
+                  className="h-full w-full object-contain" 
+                />
+              ) : (
+                <div className="text-xs text-slate-400 font-bold">No QR Code Image</div>
+              )}
+            </div>
+            {qrDetails?.qrImageUrl && (
+              <a
+                href={getMediaUrl(qrDetails.qrImageUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-350 transition-all cursor-pointer"
+              >
+                {language === 'TH' ? 'ดูภาพขนาดใหญ่' : language === 'LA' ? 'ເບິ່ງຮູບຂະໜາດໃຫຍ່' : 'View Full Image'}
+              </a>
+            )}
+          </div>
+
+          {/* Right Side: Account details and Upload Area */}
+          <div className="flex-1 flex flex-col gap-5 w-full">
+            <div>
+              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-widest block">{language === 'TH' ? 'ชำระเงินผ่าน QR CODE' : language === 'LA' ? 'ຊຳລະເງິນຜ່ານ QR CODE' : 'PAY VIA QR CODE'}</span>
+              <h2 className="font-display font-black text-lg text-slate-800 dark:text-white mt-1">
+                {language === 'TH' ? 'สแกน QR Code เพื่อชำระเงิน' : language === 'LA' ? 'ສະແກນ QR Code ເພື່ອຊຳລະເງິນ' : 'Scan QR Code to Pay'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {language === 'TH' ? 'โปรดโอนเงินตามยอดที่ระบุ และส่งหลักฐานการโอนเงินด้านล่างเพื่อรอเจ้าหน้าที่ตรวจสอบ' : language === 'LA' ? 'ກະລຸນາໂອນເງິນຕາມຍອດທີ່ລະບຸ ແລະ ສົ່ງຫຼັກຖານການໂອນເງິນດ້ານລຸ່ມເພື່ອລໍຖ້າເຈົ້າໜ້າທີ່ກວດສອບ' : 'Please transfer the exact amount and upload your payment receipt below for validation.'}
+              </p>
+            </div>
+
+            {/* Total Amount to Pay Banner */}
+            <div className="p-4 rounded-2xl bg-brand-pink-50/50 dark:bg-brand-pink-950/10 border border-brand-pink-100/30 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">{language === 'TH' ? 'ยอดเงินที่ต้องโอน' : language === 'LA' ? 'ຍອດເງິນທີ່ຕ້ອງໂอน' : 'Amount to Transfer'}</span>
+                <span className="font-display font-black text-xl text-brand-pink-500">{order.totalAmount.toLocaleString()} LAK</span>
+              </div>
+              <button 
+                onClick={() => copyToClipboard(order.totalAmount.toString())}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-pink-500 hover:bg-brand-pink-600 text-white text-[10px] font-bold transition-all active:scale-95 cursor-pointer shadow-sm shadow-brand-pink-500/10"
+              >
+                <Copy className="h-3 w-3" /> {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+
+            {/* Bank details */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800 text-xs flex flex-col gap-2">
+              <div className="flex justify-between items-center py-0.5 border-b border-slate-100 dark:border-slate-800 pb-1.5 last:border-0 last:pb-0">
+                <span className="text-slate-400">{language === 'TH' ? 'ธนาคาร' : language === 'LA' ? 'ທະນາຄານ' : 'Bank Name'}</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300">{qrDetails?.bankName || 'Banque Pour Le Commerce Exterieur Lao (BCEL)'}</span>
+              </div>
+              <div className="flex justify-between items-center py-0.5 border-b border-slate-100 dark:border-slate-800 pb-1.5 last:border-0 last:pb-0">
+                <span className="text-slate-400">{language === 'TH' ? 'ชื่อบัญชี' : language === 'LA' ? 'ຊື່ບັນຊີ' : 'Account Name'}</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300">{qrDetails?.accountName || 'PATTIE PLAY SHOP CO., LTD.'}</span>
+              </div>
+              <div className="flex justify-between items-center py-0.5 last:border-0">
+                <span className="text-slate-400">{language === 'TH' ? 'เลขที่บัญชี' : language === 'LA' ? 'ເລກບັນຊີ' : 'Account Number'}</span>
+                <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                  <span>{qrDetails?.accountNumber || '160-12-00-0123456-001'}</span>
+                  <button 
+                    onClick={() => copyToClipboard(qrDetails?.accountNumber || '160-12-00-0123456-001')}
+                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer text-slate-400 hover:text-slate-600"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Slip Upload Status */}
+            {uploadError && (
+              <div className="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-150 p-3 rounded-2xl flex items-start gap-1.5">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+            {uploadSuccess && (
+              <div className="text-xs text-brand-mint-500 bg-brand-mint-50/50 p-3 rounded-2xl flex items-start gap-1.5">
+                <ClipboardCheck className="h-4 w-4 shrink-0 text-brand-mint-500 mt-0.5" />
+                <span>{uploadSuccess}</span>
+              </div>
+            )}
+
+            {/* Upload slip form */}
+            {order.slipUrl ? (
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-brand-blue-50/20 dark:bg-brand-blue-950/5 border border-brand-blue-100/30">
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{language === 'TH' ? 'สลิปที่อัปโหลดแล้ว' : language === 'LA' ? 'ສະລິບທີ່ອັບໂຫຼດແລ້ວ' : 'Uploaded Slip Receipt'}</span>
+                <a href={getMediaUrl(order.slipUrl)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-brand-blue-500 underline truncate hover:text-brand-blue-600">
+                  {order.slipUrl}
+                </a>
+              </div>
+            ) : (
+              <div className="w-full flex flex-col gap-3">
+                {selectedFile ? (
+                  <div className="p-4 rounded-2xl border border-brand-pink-200 bg-brand-pink-50/5 dark:bg-brand-pink-950/5 text-xs flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2 text-slate-700 dark:text-slate-350">
+                      <span className="font-semibold truncate max-w-[200px] sm:max-w-md">{selectedFile.name}</span>
+                      <button
+                        onClick={() => setSelectedFile(null)}
+                        className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleUploadSubmit}
+                      disabled={uploading}
+                      className="w-full flex items-center justify-center gap-1.5 cursor-pointer rounded-full bg-brand-pink-500 hover:bg-brand-pink-600 text-white font-bold py-2.5 text-xs transition-colors active:scale-95 disabled:opacity-50"
+                    >
+                      <Upload className={`h-4 w-4 ${uploading ? 'animate-bounce' : ''}`} />
+                      {uploading ? 'Uploading...' : language === 'TH' ? 'อัปโหลดและส่งสลิป' : language === 'LA' ? 'ອັບໂຫຼດ ແລະ ສົ່ງສະລິບ' : 'Upload and Submit Slip'}
+                    </button>
+                  </div>
+                ) : (
+                  <label className="w-full flex flex-col items-center justify-center cursor-pointer border border-dashed border-brand-pink-250 hover:border-brand-pink-500 rounded-2xl bg-brand-pink-50/5 dark:bg-brand-pink-950/5 py-6 transition-all hover:bg-brand-pink-50/10">
+                    <Upload className="h-7 w-7 text-brand-pink-400" />
+                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1.5">{t('uploadSlip')}</span>
+                    <span className="text-[9px] text-slate-400 mt-0.5">Images or PDF up to 5MB</span>
+                    <input
+                      type="file"
+                      disabled={uploading}
+                      onChange={handleFileChange}
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Columns (Billing Address & Product listings) */}
@@ -398,93 +563,28 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                   {order.paymentStatus === 'PAID' ? t('PAID') : 'PENDING'}
                 </span>
               </div>
+
+              {/* If already paid and QR code, show a link to the uploaded slip if it exists */}
+              {order.paymentMethod === 'QR_CODE' && order.paymentStatus === 'PAID' && order.slipUrl && (
+                <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                  <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] block">Uploaded Slip Receipt</span>
+                  <a href={getMediaUrl(order.slipUrl)} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-brand-blue-500 underline truncate block mt-0.5">
+                    View Uploaded Slip
+                  </a>
+                </div>
+              )}
             </div>
 
-            {/* QR Payment upload prompt */}
-            {order.paymentMethod === 'QR_CODE' && order.paymentStatus !== 'PAID' && (
-              <div className="mt-2 pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-4 text-center items-center print:hidden">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scan & Upload Slip</span>
-                
-                {/* Simulated QR Code Box */}
-                <div className="flex flex-col items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl w-full border border-dashed border-slate-200 dark:border-slate-700">
-                  <div className="h-64 w-64 bg-white flex items-center justify-center border border-slate-200 p-1.5 rounded-xl overflow-hidden shadow-sm">
-                    {qrDetails?.qrImageUrl ? (
-                      <img 
-                        src={getMediaUrl(qrDetails.qrImageUrl)} 
-                        alt="BCEL One QR Code" 
-                        className="h-full w-full object-contain" 
-                      />
-                    ) : (
-                      <div className="text-[10px] text-slate-400 font-bold">No QR Code Image</div>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-350 mt-2.5">
-                    {qrDetails?.bankName || 'Banque Pour Le Commerce Exterieur Lao (BCEL)'}
-                  </span>
-                  <span className="text-[9px] text-slate-400 mt-0.5">
-                    Account: {qrDetails?.accountNumber || '160-12-00-0123456-001'} ({qrDetails?.accountName || 'PATTIE PLAY SHOP CO., LTD.'})
-                  </span>
-                </div>
-
-                {/* Slip Upload Status */}
-                {uploadError && (
-                  <div className="text-[10px] text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-150 p-2 rounded-xl text-left w-full flex items-start gap-1">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                    <span>{uploadError}</span>
-                  </div>
-                )}
-                {uploadSuccess && (
-                  <div className="text-[10px] text-brand-mint-500 bg-brand-mint-50/50 p-2 rounded-xl text-left w-full flex items-start gap-1">
-                    <ClipboardCheck className="h-3.5 w-3.5 shrink-0 text-brand-mint-500" />
-                    <span>{uploadSuccess}</span>
-                  </div>
-                )}
-
-                {/* Upload Button */}
-                {order.slipUrl ? (
-                  <div className="flex flex-col gap-2 w-full text-left">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase">Uploaded slip receipt:</span>
-                    <a href={getMediaUrl(order.slipUrl)} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-blue-500 underline truncate">
-                      {order.slipUrl}
-                    </a>
-                  </div>
-                ) : (
-                  <div className="w-full flex flex-col gap-3">
-                    {selectedFile ? (
-                      <div className="p-4 rounded-2xl border border-brand-pink-200 bg-brand-pink-50/5 dark:bg-brand-pink-950/5 text-xs flex flex-col gap-3">
-                        <div className="flex items-center justify-between gap-2 text-slate-700 dark:text-slate-350">
-                          <span className="font-semibold truncate max-w-[200px]">{selectedFile.name}</span>
-                          <button
-                            onClick={() => setSelectedFile(null)}
-                            className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                        <button
-                          onClick={handleUploadSubmit}
-                          disabled={uploading}
-                          className="w-full flex items-center justify-center gap-1.5 cursor-pointer rounded-full bg-brand-pink-500 hover:bg-brand-pink-600 text-white font-bold py-2 text-xs transition-colors active:scale-95 disabled:opacity-50"
-                        >
-                          <Upload className={`h-4 w-4 ${uploading ? 'animate-bounce' : ''}`} />
-                          {uploading ? 'Uploading...' : language === 'TH' ? 'อัปโหลดและส่งสลิป' : language === 'LA' ? 'ອັບໂຫຼດ ແລະ ສົ່ງສະລິບ' : 'Upload and Submit Slip'}
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="w-full flex flex-col items-center justify-center cursor-pointer border border-dashed border-brand-pink-200 hover:border-brand-pink-500 rounded-2xl bg-brand-pink-50/5 dark:bg-brand-pink-950/5 py-4 transition-all">
-                        <Upload className="h-6 w-6 text-brand-pink-400" />
-                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-1">{t('uploadSlip')}</span>
-                        <input
-                          type="file"
-                          disabled={uploading}
-                          onChange={handleFileChange}
-                          accept="image/*,application/pdf"
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                  </div>
-                )}
+            {/* Cancel Order Action Button */}
+            {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && order.status !== 'PAID' && order.status !== 'SHIPPING' && order.status !== 'PREPARING' && (
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                  className="w-full flex items-center justify-center gap-1.5 cursor-pointer rounded-full border border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-500 text-red-500 font-bold py-2.5 text-xs transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {cancelling ? 'Cancelling...' : language === 'TH' ? 'ยกเลิกคำสั่งซื้อ' : language === 'LA' ? 'ຍົກເລີກຄຳສັ່ງຊື້' : 'Cancel Order'}
+                </button>
               </div>
             )}
           </div>

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, ArrowLeft, Shield, QrCode, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, ArrowLeft, Shield, QrCode, MessageSquare, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function AdminSidebar() {
@@ -28,6 +28,12 @@ export default function AdminSidebar() {
       href: '/admin/orders',
       icon: ShoppingCart,
       color: 'text-brand-blue-500',
+    },
+    {
+      name: 'Customer Reports',
+      href: '/admin/customers',
+      icon: Users,
+      color: 'text-brand-purple-500',
     },
     {
       name: 'QR Code Settings',

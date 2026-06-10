@@ -19,6 +19,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   orders        Order[]
   notifications Notification[]
+  reviews       Review[]
 }
 
 model Category {
@@ -48,6 +49,7 @@ model Product {
   categoryId    String
   category      Category    @relation(fields: [categoryId], references: [id])
   orderItems    OrderItem[]
+  reviews       Review[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -108,4 +110,16 @@ model PhoneVerification {
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

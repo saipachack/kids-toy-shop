@@ -123,7 +123,15 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     const product = await prisma.product.findUnique({
       where: { id: req.params.id },
-      include: { category: true },
+      include: {
+        category: true,
+        reviews: {
+          include: {
+            user: { select: { name: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      },
     });
 
     if (!product) {
@@ -218,6 +226,75 @@ router.delete('/:id', authenticateToken, adminOnly, async (req: Request, res: Re
     });
 
     res.json({ messageEn: 'Product deleted successfully', messageTh: 'ลบสินค้าเรียบร้อยแล้ว' });
+  } catch (error: any) {
+    res.status(500).json({ messageEn: error.message || 'Server error', messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+});
+
+// POST Submit a product review (Customer who bought the product)
+router.post('/:id/reviews', authenticateToken, async (req: Request, res: Response) => {
+  const { rating, comment } = req.body;
+  const productId = req.params.id;
+  const authReq = req as any;
+
+  if (!authReq.user) {
+    return res.status(401).json({ messageEn: 'Unauthorized', messageTh: 'ไม่ได้รับอนุญาต' });
+  }
+
+  if (rating === undefined || rating < 1 || rating > 5) {
+    return res.status(400).json({
+      messageEn: 'Rating must be between 1 and 5 stars',
+      messageTh: 'คะแนนรีวิวต้องอยู่ระหว่าง 1 ถึง 5 ดาว',
+      messageLa: 'ຄະແນນຣີວິວຕ້ອງຢູ່ລະຫວ່າງ 1 ຫາ 5 ດາວ'
+    });
+  }
+
+  try {
+    // Check if customer actually bought the product and it has been delivered
+    const hasBought = await prisma.order.findFirst({
+      where: {
+        userId: authReq.user.id,
+        status: 'DELIVERED',
+        orderItems: {
+          some: { productId }
+        }
+      }
+    });
+
+    if (!hasBought) {
+      return res.status(403).json({
+        messageEn: 'You can only review products that you have purchased and have been delivered',
+        messageTh: 'คุณสามารถรีวิวได้เฉพาะสินค้าที่เคยสั่งซื้อและได้รับสินค้าเรียบร้อยแล้วเท่านั้น',
+        messageLa: 'ທ່ານສາມາດຣີວິວໄດ້ສະເພາະສິນຄ້າທີ່ເຄີຍສັ່ງຊື້ ແລະ ໄດ້ຮັບສິນຄ້າຮຽບຮ້ອຍແລ້ວເທົ່ານັ້ນ'
+      });
+    }
+
+    // Check if already reviewed
+    const existingReview = await prisma.review.findFirst({
+      where: { productId, userId: authReq.user.id }
+    });
+
+    if (existingReview) {
+      return res.status(400).json({
+        messageEn: 'You have already reviewed this product',
+        messageTh: 'คุณได้รีวิวสินค้านี้ไปแล้ว',
+        messageLa: 'ທ່ານໄດ້ຣີວິວສິນຄ້ານີ້ໄປແລ້ວ'
+      });
+    }
+
+    const review = await prisma.review.create({
+      data: {
+        productId,
+        userId: authReq.user.id,
+        rating: Number(rating),
+        comment: comment || ''
+      },
+      include: {
+        user: { select: { name: true } }
+      }
+    });
+
+    res.status(201).json(review);
   } catch (error: any) {
     res.status(500).json({ messageEn: error.message || 'Server error', messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
   }
