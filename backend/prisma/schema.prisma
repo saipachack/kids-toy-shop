@@ -112,6 +112,14 @@ model PhoneVerification {
   createdAt DateTime @default(now())
 }
 
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 model Review {
   id        String   @id @default(uuid())
   productId String

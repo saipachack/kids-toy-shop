@@ -25,7 +25,7 @@ function RegisterContent() {
   // OTP Verification States
   const [otpSent, setOtpSent] = useState(false);
   const [userOtp, setUserOtp] = useState('');
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpMessage, setOtpMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -38,16 +38,15 @@ function RegisterContent() {
   }, [resendCountdown]);
 
   const handleSendOtp = async () => {
-    if (phoneRaw.length !== 8) {
-      setError('Phone number must be exactly 8 digits');
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
     setError(null);
     setOtpMessage(null);
 
     try {
-      const finalPhone = `+85620${phoneRaw}`;
-      const response = await api.post('/auth/send-otp', { phone: finalPhone });
+      const response = await api.post('/auth/send-otp', { email });
       setOtpSent(true);
       setResendCountdown(60);
 
@@ -99,9 +98,8 @@ function RegisterContent() {
     setOtpMessage(null);
 
     try {
-      const finalPhone = `+85620${phoneRaw}`;
-      await api.post('/auth/verify-otp', { phone: finalPhone, code: userOtp });
-      setIsPhoneVerified(true);
+      await api.post('/auth/verify-otp', { email, code: userOtp });
+      setIsEmailVerified(true);
       setOtpMessage(null);
     } catch (err: any) {
       try {
@@ -139,7 +137,11 @@ function RegisterContent() {
       setError('Please fill in all required fields');
       return;
     }
-    if (!isPhoneVerified) {
+    if (phoneRaw.length !== 8) {
+      setError('Phone number must be exactly 8 digits');
+      return;
+    }
+    if (!isEmailVerified) {
       setError(t('pleaseVerifyPhone'));
       return;
     }
@@ -154,7 +156,7 @@ function RegisterContent() {
     } catch (err: any) {
       try {
         const parsedErr = JSON.parse(err.message);
-        setError(t('TH') === 'เข้าสู่ระบบ' ? parsedErr.messageTh : parsedErr.messageEn);
+        setError(language === 'TH' ? (parsedErr.messageTh || parsedErr.messageEn) : language === 'LA' ? (parsedErr.messageLa || parsedErr.messageEn) : parsedErr.messageEn);
       } catch (e) {
         setError(err.message || 'Registration failed. Try a different email.');
       }
@@ -221,18 +223,27 @@ function RegisterContent() {
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 ml-1">
                 {t('emailLabel')} *
               </label>
-              <div className="relative mt-1">
+              <div className="relative mt-1 flex items-center">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <Mail className="h-4 w-4 text-slate-400" />
                 </div>
                 <input
                   type="email"
                   required
+                  disabled={isEmailVerified}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@domain.com"
-                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 py-2 pl-10 pr-4 text-sm focus:border-brand-pink-400 focus:outline-none"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 py-2 pl-10 pr-28 text-sm focus:border-brand-pink-400 focus:outline-none disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-900/50"
                 />
+                <button
+                  type="button"
+                  disabled={!email || resendCountdown > 0 || isEmailVerified}
+                  onClick={handleSendOtp}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl bg-brand-pink-500 hover:bg-brand-pink-600 disabled:bg-slate-200 dark:disabled:bg-slate-700 text-white disabled:text-slate-400 dark:disabled:text-slate-500 px-3 py-1.5 text-[10px] font-bold transition-all active:scale-95 cursor-pointer"
+                >
+                  {isEmailVerified ? '✓' : resendCountdown > 0 ? `${resendCountdown}s` : t('sendOtp')}
+                </button>
               </div>
             </div>
 
@@ -267,27 +278,19 @@ function RegisterContent() {
                 <input
                   type="text"
                   maxLength={8}
-                  disabled={isPhoneVerified}
+                  required
                   value={phoneRaw}
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, ''); // numbers only
                     setPhoneRaw(val);
                   }}
                   placeholder={t('phonePlaceholder')}
-                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 py-2 pl-[105px] pr-28 text-sm focus:border-brand-pink-400 focus:outline-none disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-900/50"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 py-2 pl-[105px] pr-4 text-sm focus:border-brand-pink-400 focus:outline-none"
                 />
-                <button
-                  type="button"
-                  disabled={phoneRaw.length !== 8 || resendCountdown > 0 || isPhoneVerified}
-                  onClick={handleSendOtp}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl bg-brand-pink-500 hover:bg-brand-pink-600 disabled:bg-slate-200 dark:disabled:bg-slate-700 text-white disabled:text-slate-400 dark:disabled:text-slate-500 px-3 py-1.5 text-[10px] font-bold transition-all active:scale-95 cursor-pointer"
-                >
-                  {isPhoneVerified ? '✓' : resendCountdown > 0 ? `${resendCountdown}s` : t('sendOtp')}
-                </button>
               </div>
             </div>
 
-            {otpSent && !isPhoneVerified && (
+            {otpSent && !isEmailVerified && (
               <div className="p-4 rounded-2xl bg-brand-pink-50/30 dark:bg-brand-pink-950/10 border border-brand-pink-100/50 dark:border-brand-pink-900/20 space-y-3 animate-fadeIn">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-350">
@@ -301,7 +304,7 @@ function RegisterContent() {
                     }}
                     className="text-[10px] font-bold text-slate-400 hover:text-brand-pink-500"
                   >
-                    Change Number
+                    Change Email
                   </button>
                 </div>
                 <div className="relative flex items-center gap-2">
@@ -333,16 +336,16 @@ function RegisterContent() {
               </div>
             )}
             
-            {isPhoneVerified && (
+            {isEmailVerified && (
               <div className="flex items-center justify-between p-3 rounded-2xl bg-brand-mint-50/50 dark:bg-brand-mint-950/10 border border-brand-mint-100/30 text-brand-mint-600 dark:text-brand-mint-400 text-xs font-bold animate-fadeIn">
                 <span className="flex items-center gap-1.5">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-mint-500 text-white text-[10px]">✓</span>
-                  Mobile verified (+856 20 {phoneRaw})
+                  Email verified ({email})
                 </span>
                 <button
                   type="button"
                   onClick={() => {
-                    setIsPhoneVerified(false);
+                    setIsEmailVerified(false);
                     setOtpSent(false);
                     setOtpMessage(null);
                   }}

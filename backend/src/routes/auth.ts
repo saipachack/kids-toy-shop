@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../prisma';
 import { authenticateToken, AuthRequest } from '../middlewares/auth';
 import { whatsapp } from '../services/whatsapp';
+import { sendOtpEmail } from '../services/email';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_kids_shop_jwt_token_key_987654321';
@@ -230,15 +231,15 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
   }
 });
 
-// Send OTP via WhatsApp or fall back to mock
+// Send OTP via Email or fall back to mock console output
 router.post('/send-otp', async (req: Request, res: Response) => {
-  const { phone } = req.body;
+  const { email } = req.body;
 
-  if (!phone) {
+  if (!email) {
     return res.status(400).json({
-      messageEn: 'Phone number is required',
-      messageTh: 'จำเป็นต้องระบุเบอร์โทรศัพท์',
-      messageLa: 'ຈຳເປັນຕ້ອງລະບຸເບີໂທລະສັບ'
+      messageEn: 'Email address is required',
+      messageTh: 'จำเป็นต้องระบุอีเมล',
+      messageLa: 'ຈຳເປັນຕ້ອງລະບຸອີເມວ'
     });
   }
 
@@ -247,37 +248,37 @@ router.post('/send-otp', async (req: Request, res: Response) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
 
-    // Delete any existing code for this phone number to prevent duplicates
-    await prisma.phoneVerification.deleteMany({ where: { phone } });
+    // Delete any existing code for this email address to prevent duplicates
+    await prisma.emailVerification.deleteMany({ where: { email } });
 
     // Save new verification to database
-    await prisma.phoneVerification.create({
+    await prisma.emailVerification.create({
       data: {
-        phone,
+        email,
         code,
         expiresAt
       }
     });
 
-    // Try sending via real WhatsApp
-    const sentReal = await whatsapp.sendOtp(phone, code);
+    // Try sending via real email
+    const sentReal = await sendOtpEmail(email, code);
 
     if (sentReal) {
       return res.json({
         success: true,
-        messageEn: 'OTP code sent via WhatsApp',
-        messageTh: 'ส่งรหัส OTP ทาง WhatsApp แล้ว',
-        messageLa: 'ສົ່ງລະຫັດ OTP ທາງ WhatsApp ແລ້ວ'
+        messageEn: 'OTP code sent via Email',
+        messageTh: 'ส่งรหัส OTP ทางอีเมลแล้ว',
+        messageLa: 'ສົ່ງລະຫັດ OTP ທາງອີເມວແລ້ວ'
       });
     } else {
-      // Fallback mock mode if WhatsApp is disconnected
+      // Fallback mock mode if SMTP is not configured
       return res.json({
         success: true,
         mock: true,
         code,
-        messageEn: 'WhatsApp bot is offline. OTP code is displayed below.',
-        messageTh: 'บอท WhatsApp ออฟไลน์อยู่ แสดงรหัสผ่านหน้าจอดังนี้',
-        messageLa: 'ບັອດ WhatsApp ອອບໄລນ໌ຢູ່ ສະແດງລະຫັດເທິງໜ້າຈໍດັ່ງນີ້'
+        messageEn: 'Email service is running in mock mode. OTP code is displayed below.',
+        messageTh: 'บริการอีเมลอยู่ในโหมดจำลอง แสดงรหัสผ่านหน้าจอดังนี้',
+        messageLa: 'ບໍລິການອີເມວຢູ່ໃນໂໝດຈຳລອງ ສະແດງລະຫັດເທິງໜ້າຈໍດັ່ງນີ້'
       });
     }
   } catch (error: any) {
@@ -291,19 +292,19 @@ router.post('/send-otp', async (req: Request, res: Response) => {
 
 // Verify OTP Code
 router.post('/verify-otp', async (req: Request, res: Response) => {
-  const { phone, code } = req.body;
+  const { email, code } = req.body;
 
-  if (!phone || !code) {
+  if (!email || !code) {
     return res.status(400).json({
-      messageEn: 'Phone number and verification code are required',
-      messageTh: 'จำเป็นต้องระบุเบอร์โทรศัพท์และรหัสยืนยัน',
-      messageLa: 'ຈຳເປັນຕ້ອງລະບຸເບີໂທລະສັບ ແລະ ລະຫັດຢືນຢັນ'
+      messageEn: 'Email and verification code are required',
+      messageTh: 'จำเป็นต้องระบุอีเมลและรหัสยืนยัน',
+      messageLa: 'ຈຳເປັນຕ້ອງລະບຸອີເມວ ແລະ ລະຫັດຢືນຢັນ'
     });
   }
 
   try {
-    const verification = await prisma.phoneVerification.findUnique({
-      where: { phone }
+    const verification = await prisma.emailVerification.findUnique({
+      where: { email }
     });
 
     const invalidError = {
@@ -323,18 +324,18 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
 
     if (new Date() > verification.expiresAt) {
       // Delete expired code
-      await prisma.phoneVerification.delete({ where: { phone } });
+      await prisma.emailVerification.delete({ where: { email } });
       return res.status(400).json(invalidError);
     }
 
     // Success! Delete the verified record
-    await prisma.phoneVerification.delete({ where: { phone } });
+    await prisma.emailVerification.delete({ where: { email } });
 
     res.json({
       success: true,
-      messageEn: 'Phone number verified successfully',
-      messageTh: 'ยืนยันเบอร์โทรศัพท์สำเร็จ',
-      messageLa: 'ຢືນຢັນເບີໂທລະສັບສຳເລັດ'
+      messageEn: 'Email verified successfully',
+      messageTh: 'ยืนยันอีเมลสำเร็จ',
+      messageLa: 'ຢືນຢັນອີເມວສຳເລັດ'
     });
   } catch (error: any) {
     res.status(500).json({

@@ -47,7 +47,7 @@ const translations = {
     otpPlaceholder: 'Enter 6-digit code',
     otpVerified: 'Verified ✓',
     resendOtp: 'Resend in',
-    pleaseVerifyPhone: 'Please verify phone number first',
+    pleaseVerifyPhone: 'Please verify email address first',
     phonePlaceholder: 'Mobile number (8 digits)',
 
     // Catalog & Detail
@@ -198,7 +198,7 @@ const translations = {
     otpPlaceholder: 'กรอกรหัส 6 หลัก',
     otpVerified: 'ยืนยันสำเร็จ ✓',
     resendOtp: 'ส่งอีกครั้งใน',
-    pleaseVerifyPhone: 'กรุณายืนยันเบอร์มือถือก่อนสมัครสมาชิก',
+    pleaseVerifyPhone: 'กรุณายืนยันอีเมลก่อนสมัครสมาชิก',
     phonePlaceholder: 'เบอร์มือถือ 8 หลัก',
 
     // Catalog & Detail
@@ -349,7 +349,7 @@ const translations = {
     otpPlaceholder: 'ປ້ອນລະຫັດ 6 ຫຼັກ',
     otpVerified: 'ຢືນຢັນສຳເລັດ ✓',
     resendOtp: 'ສົ່ງອີກຄັ້ງໃນ',
-    pleaseVerifyPhone: 'ກະລຸນາຢືນຢັນເບີໂທລະສັບກ່ອນສະໝັກສະມາຊິກ',
+    pleaseVerifyPhone: 'ກະລຸນາຢືນຢັນອີເມວກ່ອນສະໝັກສະມາຊິກ',
     phonePlaceholder: 'ເບີໂທລະສັບ 8 ຫຼັກ',
 
     // Catalog & Detail
