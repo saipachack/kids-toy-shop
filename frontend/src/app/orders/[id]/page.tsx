@@ -407,7 +407,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 
                 {/* Simulated QR Code Box */}
                 <div className="flex flex-col items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl w-full border border-dashed border-slate-200 dark:border-slate-700">
-                  <div className="h-40 w-40 bg-white flex items-center justify-center border border-slate-200 p-1 rounded-xl overflow-hidden shadow-sm">
+                  <div className="h-64 w-64 bg-white flex items-center justify-center border border-slate-200 p-1.5 rounded-xl overflow-hidden shadow-sm">
                     {qrDetails?.qrImageUrl ? (
                       <img 
                         src={getMediaUrl(qrDetails.qrImageUrl)} 

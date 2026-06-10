@@ -149,7 +149,7 @@ export default function AdminQrSettings() {
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Checkout Preview</h3>
               
               <div className="flex flex-col items-center p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-center">
-                <div className="h-44 w-44 bg-white flex items-center justify-center border border-slate-100 p-1.5 rounded-xl overflow-hidden shadow-inner">
+                <div className="h-60 w-60 bg-white flex items-center justify-center border border-slate-100 p-1.5 rounded-xl overflow-hidden shadow-inner">
                   {qrImageUrl ? (
                     <img 
                       src={qrImageUrl.startsWith('http') ? qrImageUrl : `${API_STATIC_URL}${qrImageUrl}`} 
