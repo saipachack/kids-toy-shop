@@ -98,15 +98,37 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-// Google Login Mock
+// Google Login (Secure Token Verification & Fallback Mock)
 router.post('/google-login', async (req: Request, res: Response) => {
-  const { email, name, googleId } = req.body;
+  const { credential, email: mockEmail, name: mockName } = req.body;
 
-  if (!email || !name) {
-    return res.status(400).json({ messageEn: 'Invalid Google sign in payload', messageTh: 'ข้อมูลการเข้าสู่ระบบ Google ไม่ถูกต้อง' });
-  }
+  let email = mockEmail;
+  let name = mockName;
 
   try {
+    if (credential) {
+      // Securely verify token via Google APIs
+      const googleResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+      if (!googleResponse.ok) {
+        return res.status(400).json({
+          messageEn: 'Invalid Google token',
+          messageTh: 'โทเค็น Google ไม่ถูกต้อง',
+          messageLa: 'ໂທເຄັນ Google ບໍ່ຖືກຕ້ອງ'
+        });
+      }
+      const payload: any = await googleResponse.json();
+      email = payload.email;
+      name = payload.name || payload.email.split('@')[0];
+    }
+
+    if (!email || !name) {
+      return res.status(400).json({
+        messageEn: 'Invalid Google sign in payload',
+        messageTh: 'ข้อมูลการเข้าสู่ระบบ Google ไม่ถูกต้อง',
+        messageLa: 'ຂໍ້ມູນການເຂົ້າສູ່ລະບົບ Google ບໍ່ຖືກຕ້ອງ'
+      });
+    }
+
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -141,7 +163,11 @@ router.post('/google-login', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ messageEn: error.message || 'Server error', messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+    res.status(500).json({
+      messageEn: error.message || 'Server error',
+      messageTh: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์',
+      messageLa: 'ເກີດຂໍ້ຜິດພາດຈາກເຊີເວີ'
+    });
   }
 });
 

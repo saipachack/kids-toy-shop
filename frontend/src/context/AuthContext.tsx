@@ -20,7 +20,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; name: string; phone?: string; address?: string }) => Promise<void>;
-  googleLogin: (email: string, name: string) => Promise<void>;
+  googleLogin: (tokenOrObj: string | { email: string; name: string }) => Promise<void>;
   logout: () => void;
   updateProfile: (data: { name: string; phone: string; address: string }) => Promise<void>;
 }
@@ -80,9 +80,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const googleLogin = async (email: string, name: string) => {
+  const googleLogin = async (tokenOrObj: string | { email: string; name: string }) => {
     try {
-      const res = await api.post('/auth/google-login', { email, name });
+      const payload = typeof tokenOrObj === 'string'
+        ? { credential: tokenOrObj }
+        : tokenOrObj;
+      const res = await api.post('/auth/google-login', payload);
       localStorage.setItem('kids_shop_token', res.token);
       setToken(res.token);
       setUser(res.user);
