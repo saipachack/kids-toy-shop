@@ -36,6 +36,8 @@ jobs:
           npm run build
           # Workaround for SPA client-side routing on GitHub Pages:
           cp out/index.html out/404.html
+          # Disable Jekyll processing to allow folders starting with underscores:
+          touch out/.nojekyll
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
