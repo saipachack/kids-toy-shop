@@ -81,10 +81,10 @@ export default function Checkout() {
           orderId: order.id,
           paypalOrderId: `PAYPAL_MOCK_TX_${Date.now()}`,
         });
-        router.push(`/orders/${order.id}?status=paid&method=paypal`);
+        router.push(`/orders/detail?id=${order.id}&status=paid&method=paypal`);
       } else {
         // QR CODE bank transfer
-        router.push(`/orders/${order.id}`);
+        router.push(`/orders/detail?id=${order.id}`);
       }
     } catch (err: any) {
       try {

@@ -48,7 +48,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-[var(--border-color)] bg-white dark:bg-slate-800/80 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md dark:shadow-black/25">
       
       {/* Product Image Link */}
-      <Link href={`/products/${product.id}`} className="relative block aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-700">
+      <Link href={`/products/detail?id=${product.id}`} className="relative block aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-700">
         <img
           src={product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1531641098792-4f3951222129?w=300'}
           alt={tObj(product.nameEn, product.nameTh, product.nameLa)}
@@ -89,7 +89,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Name Link */}
-        <Link href={`/products/${product.id}`} className="mt-1 flex-1">
+        <Link href={`/products/detail?id=${product.id}`} className="mt-1 flex-1">
           <h3 className="font-display font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-brand-pink-500 transition-colors line-clamp-2">
             {tObj(product.nameEn, product.nameTh, product.nameLa)}
           </h3>

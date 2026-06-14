@@ -119,7 +119,7 @@ export default function Header() {
         const orderNumber = match[0];
         const orderInfo = await api.get(`/orders/number/${orderNumber}`);
         if (orderInfo && orderInfo.id) {
-          router.push(`/orders/${orderInfo.id}`);
+          router.push(`/orders/detail?id=${orderInfo.id}`);
           return;
         }
       }

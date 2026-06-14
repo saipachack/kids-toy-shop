@@ -278,7 +278,7 @@ export default function Profile() {
                           <div className="min-w-0">
                             <span 
                               className="font-bold text-xs text-slate-800 dark:text-white block hover:text-brand-pink-500 transition-colors cursor-pointer truncate max-w-[280px] sm:max-w-[320px]" 
-                              onClick={() => router.push(`/products/${item.productId}`)}
+                              onClick={() => router.push(`/products/detail?id=${item.productId}`)}
                             >
                               {tObj(item.product.nameEn, item.product.nameTh, item.product.nameLa)}
                             </span>
@@ -323,7 +323,7 @@ export default function Profile() {
 
                       {/* Detail View */}
                       <button
-                        onClick={() => router.push(`/orders/${ord.id}`)}
+                        onClick={() => router.push(`/orders/detail?id=${ord.id}`)}
                         className="px-4 py-2 rounded-full bg-brand-pink-500 hover:bg-brand-pink-600 text-white font-bold text-[10px] cursor-pointer transition-all shadow-sm"
                       >
                         {ord.status === 'PENDING_PAYMENT' 

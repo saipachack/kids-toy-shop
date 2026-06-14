@@ -64,7 +64,7 @@ export default function Cart() {
             >
               
               {/* Product Thumbnail */}
-              <Link href={`/products/${item.productId}`} className="h-16 w-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0">
+              <Link href={`/products/detail?id=${item.productId}`} className="h-16 w-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0">
                 <img
                   src={item.product.images && item.product.images.length > 0 ? item.product.images[0] : 'https://images.unsplash.com/photo-1531641098792-4f3951222129?w=100'}
                   alt={tObj(item.product.nameEn, item.product.nameTh, item.product.nameLa)}
@@ -74,7 +74,7 @@ export default function Cart() {
 
               {/* Title & Price info */}
               <div className="flex-1 min-w-0">
-                <Link href={`/products/${item.productId}`}>
+                <Link href={`/products/detail?id=${item.productId}`}>
                   <h3 className="font-display font-bold text-sm text-slate-800 dark:text-white hover:text-brand-pink-500 transition-colors truncate">
                     {tObj(item.product.nameEn, item.product.nameTh, item.product.nameLa)}
                   </h3>
