@@ -231,10 +231,16 @@ function RegisterContent() {
         {/* Header */}
         <div className="text-center">
           <span className="font-display text-4xl font-black tracking-tight select-none">
-            <span className="text-brand-pink-500">K</span>
-            <span className="text-brand-blue-500">i</span>
-            <span className="text-brand-yellow-500">d</span>
-            <span className="text-brand-mint-500">s</span>
+            <span className="text-brand-pink-500">P</span>
+            <span className="text-brand-blue-500">a</span>
+            <span className="text-brand-yellow-500">t</span>
+            <span className="text-brand-mint-500">t</span>
+            <span className="text-brand-purple-500">i</span>
+            <span className="text-brand-orange-500">e</span>
+            <span className="text-brand-pink-500">P</span>
+            <span className="text-brand-blue-500">l</span>
+            <span className="text-brand-yellow-500">a</span>
+            <span className="text-brand-mint-500">y</span>
             <span className="text-brand-purple-500">S</span>
             <span className="text-brand-orange-500">h</span>
             <span className="text-brand-pink-500">o</span>
