@@ -35,7 +35,9 @@ class MyApp extends StatelessWidget {
           secondary: Colors.blue[400],
         ),
         useMaterial3: true,
-        fontFamily: 'Inter', // Default fallback font
+        fontFamily: Provider.of<LanguageProvider>(context).language == 'LA'
+            ? 'Phetsarath'
+            : 'Inter',
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       ),
       home: Consumer<AuthProvider>(

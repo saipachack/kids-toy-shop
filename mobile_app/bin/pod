@@ -1,0 +1,4 @@
+#!/bin/bash
+export GEM_HOME="/Users/z14pro/.gem/ruby/2.6.0"
+export GEM_PATH="/Users/z14pro/.gem/ruby/2.6.0:/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+exec ruby -r logger /Users/z14pro/.gem/bin/pod "$@"
